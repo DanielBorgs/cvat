@@ -36,6 +36,7 @@ import {
     composeShapeDimensions, getRoundedRotation,
     clamp, validateUnionResult, processPolygonUnionResult,
     applySnapToShapePoint, isPolygonSelfIntersecting,
+    computeWrappingBox,
 } from './shared';
 import {
     CanvasModel, Geometry, UpdateReasons, FrameZoom, ActiveElement,
@@ -89,6 +90,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
     private highlightedElements: HighlightedElements;
     private configuration: Configuration;
     private snapToAngleResize: number;
+    private activeUIBbox: SVG.Rect | null;
     private draggableShape: SVG.Shape | null;
     private resizableShape: SVG.Shape | null;
     private ctrlPressed: boolean;
@@ -1177,7 +1179,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
             (shape as any).selectize(value, {
                 deepSelect: true,
                 pointSize: (2 * this.configuration.controlPointsSize) / this.geometry.scale,
-                rotationPoint: shape.type === 'rect' || shape.type === 'ellipse',
+                rotationPoint: shape.type === 'rect' || shape.type === 'ellipse' || shape.hasClass('cvat_canvas_active_bbox'),
                 pointsExclude: shape.type === 'image' ? ['lt', 'rt', 'rb', 'lb', 't', 'r', 'b', 'l'] : [],
                 pointType(cx: number, cy: number): SVG.Circle {
                     const circle: SVG.Circle = this.nested
@@ -1692,6 +1694,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
             sliceHidden: {},
         };
 
+        this.activeUIBbox = null;
         this.isImageLoading = true;
         this.draggableShape = null;
         this.resizableShape = null;
@@ -2881,6 +2884,12 @@ export class CanvasViewImpl implements CanvasView, Listener {
             const drawnState = this.drawnStates[clientID];
             const shape = this.svgShapes[clientID];
 
+            if (this.activeUIBbox) {
+                this.selectize(false, this.activeUIBbox);
+                this.activeUIBbox.remove();
+                this.activeUIBbox = null;
+            }
+
             if (drawnState.shapeType === 'points') {
                 this.svgShapes[clientID]
                     .remember('_selectHandler').nested
@@ -3073,6 +3082,28 @@ export class CanvasViewImpl implements CanvasView, Listener {
                 this.mode = Mode.IDLE;
                 showText();
             });
+        }
+
+        // Create the UI Bounding Box for Polygons/Polylines
+        if (state.shapeType === 'polygon' || state.shapeType === 'polyline') {
+            const points = readPointsFromShape(shape);
+            const bbox = computeWrappingBox(points);
+
+            this.activeUIBbox = this.adoptedContent.rect(bbox.width, bbox.height)
+                .move(bbox.x, bbox.y)
+                .attr({
+                    fill: shape.attr('fill'),
+                    'fill-opacity': 0,
+                    'stroke': shape.attr('stroke'),
+                    'stroke-width': consts.BASE_STROKE_WIDTH / this.geometry.scale,
+                    'stroke-dasharray': '5,5',
+                    'pointer-events': 'none',
+                })
+                .addClass('cvat_canvas_active_bbox');
+
+            this.content.append(this.activeUIBbox.node);
+
+            this.selectize(true, this.activeUIBbox);
         }
 
         this.canvas.dispatchEvent(
