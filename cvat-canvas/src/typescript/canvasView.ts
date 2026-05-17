@@ -1616,10 +1616,12 @@ export class CanvasViewImpl implements CanvasView, Listener {
 
                             let finalPoints = readPointsFromShape(shape);
                             if (rotation) {
-                                finalPoints = this.translatePointsFromRotatedShape(shape, finalPoints, this.activeUIBbox.cx(), this.activeUIBbox.cy());
+                                const cx = this.activeUIBbox.cx();
+                                const cy = this.activeUIBbox.cy();
+                                finalPoints = rotate2DPoints(cx, cy, rotation, finalPoints);
                             }
-
-                            this.polygonResizeSnapshot = null; // Reset snapshot
+                            shape.untransform();
+                            this.polygonResizeSnapshot = null;
                             this.onEditDone(state, this.translateFromCanvas(finalPoints), 0);
                         } else {
                             // these points does not take into account possible transformations, applied on the element
@@ -2737,6 +2739,17 @@ export class CanvasViewImpl implements CanvasView, Listener {
                     if (state.shapeType === 'points' && !isInvisible) {
                         this.selectize(false, shape);
                         this.setupPoints(shape as SVG.PolyLine, state);
+                    }
+
+                    if (this.activeElement.clientID === clientID && (state.shapeType === 'polygon' || state.shapeType === 'polyline') && this.activeUIBbox) {
+                        this.selectize(false, this.activeUIBbox);
+                        this.activeUIBbox.untransform();
+
+                        const originalPoints = readPointsFromShape(shape);
+                        const bbox = computeWrappingBox(originalPoints);
+
+                        this.activeUIBbox.move(bbox.x, bbox.y).size(bbox.width, bbox.height);
+                        this.selectize(true, this.activeUIBbox);
                     }
                 }
             }
