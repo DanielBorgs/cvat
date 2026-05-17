@@ -3158,9 +3158,6 @@ export class CanvasViewImpl implements CanvasView, Listener {
             });
         }
 
-        // FIX 2: Completely removed the duplicate, clashing manual resize block
-        // that was previously placed right here.
-
         this.canvas.dispatchEvent(
             new CustomEvent('canvas.activated', {
                 bubbles: false,
