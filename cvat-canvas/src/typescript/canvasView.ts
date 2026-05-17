@@ -93,6 +93,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
     private activeUIBbox: SVG.Rect | null;
     private draggableShape: SVG.Shape | null;
     private resizableShape: SVG.Shape | null;
+    private polygonResizeSnapshot: number[] | null = null;
     private ctrlPressed: boolean;
     private innerObjectsFlags: {
         drawHidden: Record<number, boolean>;
@@ -1411,6 +1412,8 @@ export class CanvasViewImpl implements CanvasView, Listener {
         let resizableInstance = shape;
         let skeletonSVGTemplate: SVG.G = null;
 
+        const currentDrawnState = state || (this.activeElement.clientID ? this.drawnStates[this.activeElement.clientID] : null);
+
         if (shape.classes().includes('cvat_canvas_shape_skeleton')) {
             // for skeletons we use wrapping rectangle to resize the skeleton itself
             resizableInstance = (shape as any).children().find((child: SVG.Element) => child.type === 'rect');
@@ -1455,6 +1458,10 @@ export class CanvasViewImpl implements CanvasView, Listener {
             });
         }
 
+        if (currentDrawnState && (currentDrawnState.shapeType === 'polygon' || currentDrawnState.shapeType === 'polyline') && this.activeUIBbox) {
+            resizableInstance = this.activeUIBbox;
+        }
+
         if (state) {
             let resized = false;
             let aborted = false;
@@ -1473,6 +1480,15 @@ export class CanvasViewImpl implements CanvasView, Listener {
                     this.resizableShape = shape;
                     const detail = (e.detail.event.detail as any);
                     draggedPointIndex = detail?.i ?? null;
+
+                    if (state.shapeType === 'polygon' || state.shapeType === 'polyline') {
+                        this.polygonResizeSnapshot = pointsToNumberArray(shape.attr('points'));
+
+                        resizableInstance.attr('data-xtl', resizableInstance.x());
+                        resizableInstance.attr('data-ytl', resizableInstance.y());
+                        resizableInstance.attr('data-xbr', resizableInstance.x() + resizableInstance.width());
+                        resizableInstance.attr('data-ybr', resizableInstance.y() + resizableInstance.height());
+                    }
                 })
                 .on('resizing', (e: CustomEvent): void => {
                     resized = true;
@@ -1532,6 +1548,35 @@ export class CanvasViewImpl implements CanvasView, Listener {
                         skeletonSVGTemplate = skeletonSVGTemplate ?? makeSVGFromTemplate(state.label.structure.svg);
                         setupSkeletonEdges(shape as SVG.G, skeletonSVGTemplate);
                     }
+
+                    if ((state.shapeType === 'polygon' || state.shapeType === 'polyline') && this.polygonResizeSnapshot) {
+                        const { rotation } = resizableInstance.transform();
+
+                        const [x, y] = [resizableInstance.x(), resizableInstance.y()];
+                        const prevXtl = +resizableInstance.attr('data-xtl');
+                        const prevYtl = +resizableInstance.attr('data-ytl');
+                        const prevXbr = +resizableInstance.attr('data-xbr');
+                        const prevYbr = +resizableInstance.attr('data-ybr');
+
+                        if (prevXbr - prevXtl > 0.1 && prevYbr - prevYtl > 0.1) {
+                            const projectedPoints = [];
+
+                            // Map vertices linearly to the scaling box dimensions
+                            for (let i = 0; i < this.polygonResizeSnapshot.length; i += 2) {
+                                const offsetX = (this.polygonResizeSnapshot[i] - prevXtl) / (prevXbr - prevXtl);
+                                const offsetY = (this.polygonResizeSnapshot[i + 1] - prevYtl) / (prevYbr - prevYtl);
+                                projectedPoints.push(offsetX * resizableInstance.width() + x, offsetY * resizableInstance.height() + y);
+                            }
+
+                            // Update geometry and apply native SVG rotation matching the bounding box
+                            shape.untransform();
+                            (shape as any).plot(stringifyPoints(projectedPoints));
+
+                            if (rotation) {
+                                shape.rotate(rotation, resizableInstance.cx(), resizableInstance.cy());
+                            }
+                        }
+                    }
                 })
                 .on('resizedone', (): void => {
                     if (aborted) {
@@ -1567,6 +1612,15 @@ export class CanvasViewImpl implements CanvasView, Listener {
                                 });
                                 this.onEditDone(state, points, 0);
                             }
+                        } else if (state.shapeType === 'polygon' || state.shapeType === 'polyline') {
+
+                            let finalPoints = readPointsFromShape(shape);
+                            if (rotation) {
+                                finalPoints = this.translatePointsFromRotatedShape(shape, finalPoints, this.activeUIBbox.cx(), this.activeUIBbox.cy());
+                            }
+
+                            this.polygonResizeSnapshot = null; // Reset snapshot
+                            this.onEditDone(state, this.translateFromCanvas(finalPoints), 0);
                         } else {
                             // these points does not take into account possible transformations, applied on the element
                             // so, if any (like rotation) we need to map them to canvas coordinate space
@@ -3005,7 +3059,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
             (shape as any).attr('projections', true);
         }
 
-        if (state.shapeType !== 'points') {
+        if (state.shapeType !== 'points' && state.shapeType !== 'polygon' && state.shapeType !== 'polyline') {
             this.selectize(true, shape);
         }
 
@@ -3040,6 +3094,26 @@ export class CanvasViewImpl implements CanvasView, Listener {
                     this.hideDirection(shape as SVG.Polygon | SVG.PolyLine);
                 }
             };
+
+            if (state.shapeType === 'polygon' || state.shapeType === 'polyline') {
+                const originalPoints = readPointsFromShape(shape);
+                const bbox = computeWrappingBox(originalPoints);
+
+                this.activeUIBbox = this.adoptedContent.rect(bbox.width, bbox.height)
+                    .move(bbox.x, bbox.y)
+                    .attr({
+                        fill: shape.attr('fill'),
+                        'fill-opacity': 0,
+                        'stroke': shape.attr('stroke'),
+                        'stroke-width': consts.BASE_STROKE_WIDTH / this.geometry.scale,
+                        'stroke-dasharray': '5,5',
+                        'pointer-events': 'none',
+                    })
+                    .addClass('cvat_canvas_active_bbox');
+
+                this.content.append(this.activeUIBbox.node);
+                this.selectize(true, this.activeUIBbox);
+            }
 
             let shapeSizeElement: ShapeSizeElement | null = null;
             this.resizable(state, shape, () => {
@@ -3084,27 +3158,8 @@ export class CanvasViewImpl implements CanvasView, Listener {
             });
         }
 
-        // Create the UI Bounding Box for Polygons/Polylines
-        if (state.shapeType === 'polygon' || state.shapeType === 'polyline') {
-            const points = readPointsFromShape(shape);
-            const bbox = computeWrappingBox(points);
-
-            this.activeUIBbox = this.adoptedContent.rect(bbox.width, bbox.height)
-                .move(bbox.x, bbox.y)
-                .attr({
-                    fill: shape.attr('fill'),
-                    'fill-opacity': 0,
-                    'stroke': shape.attr('stroke'),
-                    'stroke-width': consts.BASE_STROKE_WIDTH / this.geometry.scale,
-                    'stroke-dasharray': '5,5',
-                    'pointer-events': 'none',
-                })
-                .addClass('cvat_canvas_active_bbox');
-
-            this.content.append(this.activeUIBbox.node);
-
-            this.selectize(true, this.activeUIBbox);
-        }
+        // FIX 2: Completely removed the duplicate, clashing manual resize block
+        // that was previously placed right here.
 
         this.canvas.dispatchEvent(
             new CustomEvent('canvas.activated', {
