@@ -1458,7 +1458,11 @@ export class CanvasViewImpl implements CanvasView, Listener {
             });
         }
 
-        if (currentDrawnState && (currentDrawnState.shapeType === 'polygon' || currentDrawnState.shapeType === 'polyline') && this.activeUIBbox) {
+        if (state?.bboxEditMode
+            && currentDrawnState
+            && (currentDrawnState.shapeType === 'polygon' || currentDrawnState.shapeType === 'polyline')
+            && this.activeUIBbox) {
+
             resizableInstance = this.activeUIBbox;
         }
 
@@ -1481,7 +1485,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
                     const detail = (e.detail.event.detail as any);
                     draggedPointIndex = detail?.i ?? null;
 
-                    if (state.shapeType === 'polygon' || state.shapeType === 'polyline') {
+                    if (state.bboxEditMode && (state.shapeType === 'polygon' || state.shapeType === 'polyline')) {
                         this.polygonResizeSnapshot = pointsToNumberArray(shape.attr('points'));
 
                         resizableInstance.attr('data-xtl', resizableInstance.x());
@@ -1549,7 +1553,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
                         setupSkeletonEdges(shape as SVG.G, skeletonSVGTemplate);
                     }
 
-                    if ((state.shapeType === 'polygon' || state.shapeType === 'polyline') && this.polygonResizeSnapshot) {
+                    if (state.bboxEditMode && (state.shapeType === 'polygon' || state.shapeType === 'polyline') && this.polygonResizeSnapshot) {
                         const { rotation } = resizableInstance.transform();
 
                         const [x, y] = [resizableInstance.x(), resizableInstance.y()];
@@ -1612,10 +1616,10 @@ export class CanvasViewImpl implements CanvasView, Listener {
                                 });
                                 this.onEditDone(state, points, 0);
                             }
-                        } else if (state.shapeType === 'polygon' || state.shapeType === 'polyline') {
-
+                        } else if (state.bboxEditMode && (state.shapeType === 'polygon' || state.shapeType === 'polyline')) {
                             let finalPoints = readPointsFromShape(shape);
-                            if (rotation) {
+
+                            if (rotation && this.activeUIBbox) {
                                 const cx = this.activeUIBbox.cx();
                                 const cy = this.activeUIBbox.cy();
                                 finalPoints = rotate2DPoints(cx, cy, rotation, finalPoints);
@@ -2587,6 +2591,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
             descriptions: [...state.descriptions],
             zOrder: state.zOrder,
             pinned: state.pinned,
+            bboxEditMode: state.bboxEditMode,
             updated: state.updated,
             frame: state.frame,
             label: state.label,
@@ -2690,7 +2695,10 @@ export class CanvasViewImpl implements CanvasView, Listener {
                 }
             }
 
-            if (drawnState.pinned !== state.pinned && this.activeElement.clientID !== null) {
+            const toggledPin = drawnState.pinned !== state.pinned;
+            const toggledBboxEdit = drawnState.bboxEditMode !== state.bboxEditMode;
+
+            if ((toggledPin || toggledBboxEdit) && this.activeElement.clientID !== null) {
                 const activeElement = { ...this.activeElement };
                 this.deactivate();
                 this.activate(activeElement);
@@ -3072,7 +3080,9 @@ export class CanvasViewImpl implements CanvasView, Listener {
             (shape as any).attr('projections', true);
         }
 
-        if (state.shapeType !== 'points' && state.shapeType !== 'polygon' && state.shapeType !== 'polyline') {
+        const isBboxEditMode = state.bboxEditMode && (state.shapeType === 'polygon' || state.shapeType === 'polyline');
+
+        if (state.shapeType !== 'points' && !isBboxEditMode) {
             this.selectize(true, shape);
         }
 
@@ -3108,7 +3118,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
                 }
             };
 
-            if (state.shapeType === 'polygon' || state.shapeType === 'polyline') {
+            if (state.bboxEditMode && (state.shapeType === 'polygon' || state.shapeType === 'polyline')) {
                 const originalPoints = readPointsFromShape(shape);
                 const bbox = computeWrappingBox(originalPoints);
 

@@ -52,6 +52,7 @@ export interface DrawnState {
     descriptions: string[];
     zOrder?: number;
     pinned?: boolean;
+    bboxEditMode?: boolean;
     updated: number;
     frame: number;
     label: any;
