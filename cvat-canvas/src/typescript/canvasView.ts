@@ -3127,7 +3127,7 @@ export class CanvasViewImpl implements CanvasView, Listener {
                     .attr({
                         fill: shape.attr('fill'),
                         'fill-opacity': 0,
-                        'stroke': shape.attr('stroke'),
+                        'stroke': shape.attr('fill'),
                         'stroke-width': consts.BASE_STROKE_WIDTH / this.geometry.scale,
                         'stroke-dasharray': '5,5',
                         'pointer-events': 'none',
