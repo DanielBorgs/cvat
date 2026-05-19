@@ -270,6 +270,7 @@ class ItemButtonsWrapper extends React.PureComponent<StateToProps & DispatchToPr
                 switchKeyFrameShortcut={normalizedKeyMap.SWITCH_KEYFRAME}
                 nextKeyFrameShortcut={normalizedKeyMap.NEXT_KEY_FRAME}
                 prevKeyFrameShortcut={normalizedKeyMap.PREV_KEY_FRAME}
+                switchBboxEditModeShortcut={normalizedKeyMap.SWITCH_BBOX_EDIT_MODE}
                 outsideDisabled={outsideDisabled}
                 hiddenDisabled={hiddenDisabled}
                 keyframeDisabled={keyframeDisabled || (first === last && keyframe)}

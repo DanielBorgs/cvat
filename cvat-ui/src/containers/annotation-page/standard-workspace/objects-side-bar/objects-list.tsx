@@ -110,6 +110,12 @@ const componentShortcuts = {
         sequences: ['p'],
         scope: ShortcutScope.OBJECTS_SIDEBAR,
     },
+    SWITCH_BBOX_EDIT_MODE: {
+        name: 'Toggle edit mode',
+        description: 'Change bounding box edit mode for an active object',
+        sequences: ['s'],
+        scope: ShortcutScope.OBJECTS_SIDEBAR,
+    },
     SWITCH_KEYFRAME: {
         name: 'Switch keyframe',
         description: 'Change keyframe property for an active track',
@@ -549,6 +555,14 @@ class ObjectsListContainer extends React.PureComponent<Props, State> {
                 const state = activatedState(true);
                 if (state) {
                     state.pinned = !state.pinned;
+                    updateAnnotations([state]);
+                }
+            },
+            SWITCH_BBOX_EDIT_MODE: (event?: KeyboardEvent) => {
+                preventDefault(event);
+                const state = activatedState(true);
+                if (state && [ShapeType.POLYGON, ShapeType.POLYLINE].includes(state.shapeType)) {
+                    state.bboxEditMode = !state.bboxEditMode;
                     updateAnnotations([state]);
                 }
             },

@@ -10,7 +10,7 @@ import Layout, { SiderProps } from 'antd/lib/layout';
 import Text from 'antd/lib/typography/Text';
 
 import { filterApplicableLabels } from 'utils/filter-applicable-labels';
-import { Label, ObjectType } from 'cvat-core-wrapper';
+import { Label, ObjectType, ShapeType } from 'cvat-core-wrapper';
 import {
     activateObject as activateObjectAction,
     changeFrameAsync,
@@ -80,6 +80,12 @@ const componentShortcuts = {
         name: 'Switch pinned property',
         description: 'Change pinned property for an active object',
         sequences: ['p'],
+        scope: ShortcutScope.OBJECTS_SIDEBAR,
+    },
+    SWITCH_BBOX_EDIT_MODE: {
+        name: 'Toggle edit mode',
+        description: 'Change bounding box edit mode for an active object',
+        sequences: ['s'],
         scope: ShortcutScope.OBJECTS_SIDEBAR,
     },
     NEXT_KEY_FRAME: {
@@ -288,6 +294,13 @@ function AttributeAnnotationSidebar(props: StateToProps & DispatchToProps): JSX.
             preventDefault(event);
             if (activeObjectState) {
                 activeObjectState.pinned = !activeObjectState.pinned;
+                updateAnnotations([activeObjectState]);
+            }
+        },
+        SWITCH_BBOX_EDIT_MODE: (event: KeyboardEvent | undefined) => {
+            preventDefault(event);
+            if (activeObjectState && [ShapeType.POLYGON, ShapeType.POLYLINE].includes(activeObjectState.shapeType)) {
+                activeObjectState.bboxEditMode = !activeObjectState.bboxEditMode;
                 updateAnnotations([activeObjectState]);
             }
         },

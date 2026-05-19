@@ -49,6 +49,7 @@ interface Props {
     switchKeyFrameShortcut: string;
     nextKeyFrameShortcut: string;
     prevKeyFrameShortcut: string;
+    switchBboxEditModeShortcut: string;
 
     navigateFirstKeyframe: null | (() => void);
     navigatePrevKeyframe: null | (() => void);
@@ -240,12 +241,12 @@ function SwitchHidden(props: Props): JSX.Element {
 
 function SwitchBboxEditMode(props: Props): JSX.Element {
     const {
-        locked, bboxEditMode, setBboxEditMode, unsetBboxEditMode
+        locked, bboxEditMode, setBboxEditMode, unsetBboxEditMode, switchBboxEditModeShortcut
     } = props;
 
     const style = locked ? disabledStyle : {};
     return (
-        <CVATTooltip title={`Toggle bounding box edit mode`}>
+        <CVATTooltip title={`Toggle bounding box edit mode ${switchBboxEditModeShortcut}`}>
             {bboxEditMode ? (
                 <ExpandAltOutlined
                     {...classes.bboxEditMode.enabled}
