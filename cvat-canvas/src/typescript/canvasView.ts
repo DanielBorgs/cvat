@@ -1976,7 +1976,6 @@ export class CanvasViewImpl implements CanvasView, Listener {
 
             if (this.mode !== Mode.IDLE) return;
             if (e.ctrlKey || e.altKey) return;
-            if (this.activeUIBbox) return;
 
             if (!this.isImageLoading) {
                 const { offset } = this.controller.geometry;
@@ -3131,28 +3130,9 @@ export class CanvasViewImpl implements CanvasView, Listener {
                         'stroke': shape.attr('fill'),
                         'stroke-width': consts.BASE_STROKE_WIDTH / this.geometry.scale,
                         'stroke-dasharray': '5,5',
-                        'pointer-events': 'all',
+                        'pointer-events': 'none',
                     })
                     .addClass('cvat_canvas_active_bbox');
-
-                this.activeUIBbox.on(
-                    'mousedown.canvas click.canvas mouseover.canvas mousemove.canvas',
-                    (e: MouseEvent): void => {
-                        e.stopPropagation();
-
-                        if (e.type === 'mousedown' || e.type === 'click') {
-                            this.canvas.dispatchEvent(
-                                new CustomEvent('canvas.clicked', {
-                                    bubbles: false,
-                                    cancelable: true,
-                                    detail: {
-                                        state,
-                                    },
-                                }),
-                            );
-                        }
-                    }
-                );
 
                 this.content.append(this.activeUIBbox.node);
                 this.selectize(true, this.activeUIBbox);
