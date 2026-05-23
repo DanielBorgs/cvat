@@ -29,6 +29,7 @@ import AttributeEditor from './attribute-editor';
 import AttributeSwitcher from './attribute-switcher';
 import ObjectBasicsEditor from './object-basics-editor';
 import ObjectSwitcher from './object-switcher';
+import { mirror2DPoints } from 'cvat-ui/src/utils/math';
 
 interface StateToProps {
     activatedStateID: number | null;
@@ -99,6 +100,18 @@ const componentShortcuts = {
         description: 'Go to the previous keyframe of an active track',
         sequences: ['e'],
         scope: ShortcutScope.OBJECTS_SIDEBAR,
+    },
+    MIRROR_HORIZONTAL: {
+        name: 'Mirror horizontal',
+        description: 'Mirror the selected polygon or polyline horizontally',
+        sequences: ['alt+h'],
+        scope: ShortcutScope.ATTRIBUTE_ANNOTATION_WORKSPACE,
+    },
+    MIRROR_VERTICAL: {
+        name: 'Mirror vertical',
+        description: 'Mirror the selected polygon or polyline vertically',
+        sequences: ['alt+v'],
+        scope: ShortcutScope.ATTRIBUTE_ANNOTATION_WORKSPACE,
     },
 };
 
@@ -322,6 +335,20 @@ function AttributeAnnotationSidebar(props: StateToProps & DispatchToProps): JSX.
                 if (frame !== null && isAbleToChangeFrame(frame)) {
                     changeFrame(frame);
                 }
+            }
+        },
+        MIRROR_HORIZONTAL: (event: KeyboardEvent | undefined) => {
+            preventDefault(event);
+            if (activeObjectState && activeObjectState.points && [ShapeType.POLYGON, ShapeType.POLYLINE].includes(activeObjectState.shapeType)) {
+                activeObjectState.points = mirror2DPoints(activeObjectState.points, true, false);
+                updateAnnotations([activeObjectState]);
+            }
+        },
+        MIRROR_VERTICAL: (event: KeyboardEvent | undefined) => {
+            preventDefault(event);
+            if (activeObjectState && activeObjectState.points && [ShapeType.POLYGON, ShapeType.POLYLINE].includes(activeObjectState.shapeType)) {
+                activeObjectState.points = mirror2DPoints(activeObjectState.points, false, true);
+                updateAnnotations([activeObjectState]);
             }
         },
     };
