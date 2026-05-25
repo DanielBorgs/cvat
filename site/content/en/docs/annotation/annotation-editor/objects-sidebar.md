@@ -62,6 +62,9 @@ The action menu contains:
     copy of the object on `N` _subsequent_ frames at the same position.
   - **Propagate backward** (![Back propagate](/images/propagate_back.png)) creates
     a copy of the object on `N` _previous_ frames at the same position.
+- **BBox edit mode** - toggles a bounding box for resizing and rotating complex shapes. Keyboard shortcut **S**.
+- **Mirror horizontal** - mirrors the shape horizontally. Keyboard shortcut **Shift+H**.
+- **Mirror vertical** - mirrors the shape vertically. Keyboard shortcut **Shift+V**.
 
   ![Window with options and parameters for object propagation](/images/image053.jpg)
 
