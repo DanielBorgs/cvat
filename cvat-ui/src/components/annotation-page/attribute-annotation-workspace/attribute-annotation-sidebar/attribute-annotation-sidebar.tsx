@@ -104,13 +104,13 @@ const componentShortcuts = {
     MIRROR_HORIZONTAL: {
         name: 'Mirror horizontal',
         description: 'Mirror the selected polygon or polyline horizontally',
-        sequences: ['alt+h'],
+        sequences: ['shift+h'],
         scope: ShortcutScope.ATTRIBUTE_ANNOTATION_WORKSPACE,
     },
     MIRROR_VERTICAL: {
         name: 'Mirror vertical',
         description: 'Mirror the selected polygon or polyline vertically',
-        sequences: ['alt+v'],
+        sequences: ['shift+v'],
         scope: ShortcutScope.ATTRIBUTE_ANNOTATION_WORKSPACE,
     },
 };
