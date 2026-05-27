@@ -31,9 +31,6 @@ These shortcuts are organized by scopes. Some are global, meaning they work acro
 | **Control Sidebar**              | Must be unique across itself, all workspaces, Annotation Page and Global Scope. |
 | **Objects Sidebar**              | Must be unique across itself, all workspaces, Annotation Page and Global Scope. |
 | **Labels Editor**                | Must be unique across itself and Global Scope.                                  |
-| **Toggle BBox Edit Mode**        | Must be unique across itself and Objects Sidebar Scope.                         |
-| **Mirror Horizontal**            | Must be unique across itself and Objects Sidebar Scope.                         |
-| **Mirror Vertical**              | Must be unique across itself and Objects Sidebar Scope.                         |
 
 ## Shortcuts Customization
 
