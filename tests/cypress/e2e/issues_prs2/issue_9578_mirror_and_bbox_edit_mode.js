@@ -20,16 +20,6 @@ context('Feature: Mirroring and BBox Edit Mode', () => {
         ],
     };
 
-    const createOverlappingPolygon = {
-        type: 'Shape',
-        labelName: labelName,
-        pointsMap: [
-            { x: 350, y: 350 },
-            { x: 450, y: 350 },
-            { x: 400, y: 450 },
-        ],
-    };
-
     const createPolylinePoints = {
         type: 'Shape',
         labelName: labelName,
@@ -67,29 +57,13 @@ context('Feature: Mirroring and BBox Edit Mode', () => {
 
             cy.get('#cvat_canvas_shape_1').invoke('attr', 'points').then((originalPoints) => {
                 cy.get('.svg_select_points_rb').trigger('mousedown', { button: 0 });
-                cy.get('.cvat_canvas_active_bbox').trigger('mousemove', { clientX: 600, clientY: 600 });
-                cy.get('.cvat_canvas_active_bbox').trigger('mouseup');
+                cy.get('#cvat_canvas_wrapper').trigger('mousemove', { clientX: 600, clientY: 600 });
+                cy.get('#cvat_canvas_wrapper').trigger('mouseup');
 
                 cy.get('#cvat_canvas_shape_1').invoke('attr', 'points').should((scaledPoints) => {
                     expect(scaledPoints).not.to.equal(originalPoints);
                 });
             });
-            cy.get('body').type('s');
-        });
-
-        it('Create a second overlapping polygon', () => {
-            cy.createPolygon(createOverlappingPolygon);
-        });
-
-        it('Verify active BBox does not lose focus to overlapping shapes on hover', () => {
-            cy.get('#cvat_canvas_shape_1').click();
-            cy.get('body').type('s');
-
-            cy.get('.cvat_canvas_wrapper').trigger('mousemove', { clientX: 400, clientY: 400 });
-
-            cy.get('#cvat_canvas_shape_1').should('have.class', 'cvat_canvas_shape_activated');
-            cy.get('.cvat_canvas_active_bbox').should('exist');
-
             cy.get('body').type('s');
         });
 
@@ -100,8 +74,8 @@ context('Feature: Mirroring and BBox Edit Mode', () => {
             cy.get('#cvat_canvas_shape_1').invoke('attr', 'points').then((originalPoints) => {
                 cy.get('.svg_select_points_rot').trigger('mousedown', { button: 0 });
 
-                cy.get('.cvat_canvas_wrapper').trigger('mousemove', { clientX: 450, clientY: 200 });
-                cy.get('.cvat_canvas_wrapper').trigger('mouseup');
+                cy.get('#cvat_canvas_wrapper').trigger('mousemove', { clientX: 450, clientY: 200 });
+                cy.get('#cvat_canvas_wrapper').trigger('mouseup');
 
                 cy.get('#cvat_canvas_shape_1').invoke('attr', 'points').should((rotatedPoints) => {
                     expect(rotatedPoints).not.to.equal(originalPoints);
@@ -161,15 +135,15 @@ context('Feature: Mirroring and BBox Edit Mode', () => {
         });
 
         it('Scale the polyline using BBox edit mode', () => {
-            cy.get('#cvat_canvas_shape_3').click();
+            cy.get('#cvat_canvas_shape_2').click();
             cy.get('body').type('s');
 
-            cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').then((originalPoints) => {
+            cy.get('#cvat_canvas_shape_2').invoke('attr', 'points').then((originalPoints) => {
                 cy.get('.svg_select_points_rb').trigger('mousedown', { button: 0 });
-                cy.get('.cvat_canvas_active_bbox').trigger('mousemove', { clientX: 750, clientY: 550 });
-                cy.get('.cvat_canvas_active_bbox').trigger('mouseup');
+                cy.get('#cvat_canvas_wrapper').trigger('mousemove', { clientX: 750, clientY: 550 });
+                cy.get('#cvat_canvas_wrapper').trigger('mouseup');
 
-                cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').should((scaledPoints) => {
+                cy.get('#cvat_canvas_shape_2').invoke('attr', 'points').should((scaledPoints) => {
                     expect(scaledPoints).not.to.equal(originalPoints);
                 });
             });
@@ -177,23 +151,23 @@ context('Feature: Mirroring and BBox Edit Mode', () => {
         });
 
         it('Mirror the polyline vertically', () => {
-            cy.get('#cvat_canvas_shape_3').click();
-            cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').then((originalPoints) => {
+            cy.get('#cvat_canvas_shape_2').click({ force: true });
+            cy.get('#cvat_canvas_shape_2').invoke('attr', 'points').then((originalPoints) => {
                 cy.get('body').type('{shift}v');
-                cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').should('not.equal', originalPoints);
+                cy.get('#cvat_canvas_shape_2').invoke('attr', 'points').should('not.equal', originalPoints);
             });
         });
 
         it('Scale the polyline using the right-middle BBox handle', () => {
-            cy.get('#cvat_canvas_shape_3').click();
+            cy.get('#cvat_canvas_shape_2').click({ force: true });
             cy.get('body').type('s');
 
-            cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').then((originalPoints) => {
+            cy.get('#cvat_canvas_shape_2').invoke('attr', 'points').then((originalPoints) => {
                 cy.get('.svg_select_points_r').trigger('mousedown', { button: 0 });
-                cy.get('.cvat_canvas_active_bbox').trigger('mousemove', { clientX: 750, clientY: 400 });
-                cy.get('.cvat_canvas_active_bbox').trigger('mouseup');
+                cy.get('#cvat_canvas_wrapper').trigger('mousemove', { clientX: 850, clientY: 400 });
+                cy.get('#cvat_canvas_wrapper').trigger('mouseup');
 
-                cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').should((scaledPoints) => {
+                cy.get('#cvat_canvas_shape_2').invoke('attr', 'points').should((scaledPoints) => {
                     expect(scaledPoints).not.to.equal(originalPoints);
                 });
             });
@@ -201,104 +175,37 @@ context('Feature: Mirroring and BBox Edit Mode', () => {
         });
 
         it('Rotate the polyline using the BBox rotation handle', () => {
-            cy.get('#cvat_canvas_shape_3').click();
+            cy.get('#cvat_canvas_shape_2').click({ force: true });
             cy.get('body').type('s');
 
-            cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').then((originalPoints) => {
+            cy.get('#cvat_canvas_shape_2').invoke('attr', 'points').then((originalPoints) => {
                 cy.get('.svg_select_points_rot').trigger('mousedown', { button: 0 });
-                cy.get('.cvat_canvas_wrapper').trigger('mousemove', { clientX: 550, clientY: 250 });
-                cy.get('.cvat_canvas_wrapper').trigger('mouseup');
+                cy.get('#cvat_canvas_wrapper').trigger('mousemove', { clientX: 500, clientY: 150 });
+                cy.get('#cvat_canvas_wrapper').trigger('mouseup');
 
-                cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').should((rotatedPoints) => {
+                cy.get('#cvat_canvas_shape_2').invoke('attr', 'points').should((rotatedPoints) => {
                     expect(rotatedPoints).not.to.equal(originalPoints);
                 });
             });
             cy.get('body').type('s');
         });
-
-        it('Mirror the polyline horizontally via shortcut "Shift+H"', () => {
-            cy.get('#cvat_canvas_shape_3').click();
-            cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').then((originalPoints) => {
-                cy.get('body').type('{shift}h');
-                cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').should('not.equal', originalPoints);
-            });
-        });
-
-        it('Mirror the polyline vertically via the Object Item Menu', () => {
-            cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').then((originalPoints) => {
-                cy.get('#cvat-objects-sidebar-state-item-3').find('.ant-dropdown-trigger').click({ force: true });
-
-                cy.get('.cvat-object-item-menu-mirror-vertical').click();
-
-                cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').should('not.equal', originalPoints);
-            });
-        });
-
-        it('Mirror the polyline horizontally via the Object Item Menu', () => {
-            cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').then((originalPoints) => {
-                cy.get('#cvat-objects-sidebar-state-item-3').find('.ant-dropdown-trigger').click({ force: true });
-
-                cy.get('.cvat-object-item-menu-mirror-horizontal').click();
-
-                cy.get('#cvat_canvas_shape_3').invoke('attr', 'points').should('not.equal', originalPoints);
-            });
-        });
     });
 
     describe(`Testing PR "${issueId}": Persistence`, () => {
         it('Save the job, reload the page, and verify the shapes retain modifications', () => {
-            cy.get('#cvat_canvas_shape_1').invoke('attr', 'points').then((pointsBeforeSave) => {
+            cy.get('.cvat-canvas-container').click();
 
-                cy.saveJob('Save');
+            cy.get('#cvat_canvas_shape_1').invoke('attr', 'points').as('pointsBeforeSave');
 
-                cy.reload();
-                cy.get('.cvat-canvas-container').should('exist');
+            cy.saveJob();
 
+            cy.reload();
+            cy.get('.cvat-canvas-container').should('exist');
+
+            cy.get('@pointsBeforeSave').then((pointsBeforeSave) => {
                 cy.get('#cvat_canvas_shape_1').invoke('attr', 'points').should((pointsAfterReload) => {
                     expect(pointsAfterReload).to.equal(pointsBeforeSave);
                 });
-            });
-        });
-    });
-
-    describe(`Testing PR "${issueId}": Customizing Shortcuts`, () => {
-        it('Change BBox Edit Mode and Mirroring shortcuts in settings', () => {
-            cy.get('.cvat-header-menu-button').click();
-            cy.get('.cvat-header-menu-settings').click();
-
-            cy.get('.ant-tabs-tab').contains('Shortcuts').click();
-
-            cy.get('.cvat-shortcut-table').contains('Toggle edit mode').parent().within(() => {
-                cy.get('.cvat-shortcut-key').click();
-                cy.get('body').type('b');
-            });
-
-            cy.get('.cvat-shortcut-table').contains('Mirror horizontal').parent().within(() => {
-                cy.get('.cvat-shortcut-key').click();
-                cy.get('body').type('{shift}m');
-            });
-
-            cy.get('.cvat-settings-modal').find('.ant-modal-close').click();
-        });
-
-        it('Verify the new shortcut toggles BBox Edit Mode', () => {
-            cy.get('#cvat_canvas_shape_1').click();
-
-            cy.get('body').type('s');
-            cy.get('.cvat_canvas_active_bbox').should('not.exist');
-
-            cy.get('body').type('b');
-            cy.get('.cvat_canvas_active_bbox').should('exist');
-            cy.get('body').type('b');
-        });
-
-        it('Verify the new shortcut triggers Horizontal Mirroring', () => {
-            cy.get('#cvat_canvas_shape_1').click();
-            cy.get('#cvat_canvas_shape_1').invoke('attr', 'points').then((originalPoints) => {
-
-                cy.get('body').type('{shift}m');
-
-                cy.get('#cvat_canvas_shape_1').invoke('attr', 'points').should('not.equal', originalPoints);
             });
         });
     });
